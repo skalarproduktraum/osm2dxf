@@ -54,14 +54,22 @@ def generate_dxf(filename, tags):
             nodes = path.xpathEval("nd")
         
             points = []
+            closed_path = False
+
             for node in nodes:
                 if lon.has_key(node.prop('ref')) and lat.has_key(node.prop('ref')):
                     points.append( (long2coord(lon[node.prop('ref')]), lat2coord(lat[node.prop('ref')]), float(elevation)/15.0) )
                 else:
                     print("Key %s not found in lat or long dict! Skipping...")
+
+            polyline = dxf.polyline(points, layer=layer_name)
+            
+            if nodes[-1].prop('ref') == nodes[0].prop('ref'):
+                closed_path = True
+                polyline.close(status=True)
         
-            print "Writing path for layer %s with elevation=%dm, %d nodes" %(layer_name, elevation, len(nodes))
-            drawing.add(dxf.polyline(points, layer=layer_name))
+            print "Writing %s path for layer %s with elevation=%dm, %d nodes" %("closed" if closed_path else "", layer_name, elevation, len(nodes))
+            drawing.add(polyline)
         
     print "Saving file..."
     drawing.save()
